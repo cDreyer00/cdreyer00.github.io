@@ -41,7 +41,7 @@
         }
         #controls {
             position: absolute;
-            top: 20px;
+            top: 60px;
             left: 20px;
             color: #0ff;
             background-color: rgba(0, 20, 30, 0.7);
@@ -53,6 +53,33 @@
             font-family: 'Courier New', monospace;
             text-shadow: 0 0 5px #0ff;
             width: 250px;
+            transition: transform 0.3s ease;
+        }
+        #controls.hidden {
+            transform: translateX(-300px);
+        }
+        #toggleControls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 30px;
+            height: 30px;
+            background-color: rgba(0, 20, 30, 0.7);
+            border: 1px solid #0ff;
+            color: #0ff;
+            border-radius: 50%;
+            z-index: 6;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            box-shadow: 0 0 5px #0ff;
+        }
+        #toggleControls:hover {
+            background-color: #0ff;
+            color: #003;
+            box-shadow: 0 0 15px #0ff;
         }
         #shop {
             position: absolute;
@@ -181,13 +208,15 @@
     <canvas id="glowCanvas"></canvas>
     <canvas id="particlesCanvas"></canvas>
     <div id="crtOverlay"></div>
+    <div id="toggleControls">></div>
     <div id="controls">
-        <p>NEON ORB SYSTEM v2.1</p>
+        <p style="margin-top: 0;">NEON ORB SYSTEM v2.1</p>
         <p>COINS: <span class="coin-display" id="coinCount">0</span></p>
         <p>ORBS: <span id="ballCount">0</span></p>
         <button id="shakeBtn">SYSTEM SHOCK</button>
         <button id="shopBtn">UPGRADES</button>
         <button id="clearBtn">PURGE SYSTEM</button>
+        <button id="resetBtn" style="background-color: #900; color: #fff; border: 1px solid #f00; box-shadow: 0 0 5px #f00;">RESET PROGRESS</button>
     </div>
 
     <div id="shop">
@@ -243,6 +272,8 @@
         const shopBtn = document.getElementById('shopBtn');
         const closeShopBtn = document.getElementById('closeShopBtn');
         const shop = document.getElementById('shop');
+        const controls = document.getElementById('controls');
+        const toggleControlsBtn = document.getElementById('toggleControls');
         
         // Upgrade elements
         const ballScoreLevelDisplay = document.getElementById('ballScoreLevel');
@@ -798,6 +829,23 @@
             }
         }
         
+        // Reset all progress
+        function resetProgress() {
+            if (confirm("Are you sure you want to reset all progress? This action cannot be undone.")) {
+                localStorage.clear();
+                coins = 0;
+                ballCount = 0;
+                balls = [];
+                Object.keys(upgrades).forEach(key => {
+                    upgrades[key].level = 1;
+                    upgrades[key].cost = key === 'coinMultiplier' ? 10 : 5;
+                });
+                updateCoinDisplay();
+                updateUpgradeDisplays();
+                clearBalls();
+            }
+        }
+
         // Animation loop
         function animate() {
             requestAnimationFrame(animate);
@@ -817,6 +865,12 @@
             }
         }
         
+        // Toggle controls visibility
+        function toggleControls() {
+            controls.classList.toggle('hidden');
+            toggleControlsBtn.textContent = controls.classList.contains('hidden') ? '>' : '<';
+        }
+        
         // Event listeners
         canvas.addEventListener('click', (event) => {
             spawnBall(event.clientX, event.clientY);
@@ -830,6 +884,9 @@
         upgradeShakeForceBtn.addEventListener('click', upgradeShakeForce);
         upgradeSpawnRateBtn.addEventListener('click', upgradeSpawnRate);
         upgradeCoinMultiplierBtn.addEventListener('click', upgradeCoinMultiplier);
+        const resetBtn = document.getElementById('resetBtn');
+        resetBtn.addEventListener('click', resetProgress);
+        toggleControlsBtn.addEventListener('click', toggleControls);
         
         window.addEventListener('resize', () => {
             resizeCanvases();
@@ -840,6 +897,7 @@
         loadUpgrades();
         init();
         animate();
+        toggleControls();
     </script>
 </body>
 </html>
