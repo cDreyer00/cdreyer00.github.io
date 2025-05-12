@@ -1,903 +1,1034 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-    <title>Neon Orbs</title>
-    <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-            background-color: #0a0a12;
-            font-family: 'Courier New', monospace;
-        }
-        canvas {
-            display: block;
-            position: absolute;
-            top: 0;
-            left: 0;
-        }
-        #gameCanvas {
-            z-index: 1;
-        }
-        #glowCanvas {
-            z-index: 2;
-            opacity: 0.8;
-            pointer-events: none;
-        }
-        #particlesCanvas {
-            z-index: 3;
-            pointer-events: none;
-        }
-        #crtOverlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(rgba(18, 16, 16, 0.1) 50%, rgba(0, 0, 0, 0.25) 50%),
-                        linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            background-size: 100% 4px, 3px 100%;
-            z-index: 4;
-            pointer-events: none;
-        }
-        #controls {
-            position: absolute;
-            top: 60px;
-            left: 20px;
-            color: #0ff;
-            background-color: rgba(0, 20, 30, 0.7);
-            padding: 15px;
-            border-radius: 5px;
-            border: 1px solid #0ff;
-            box-shadow: 0 0 10px #0ff, inset 0 0 5px #0ff;
-            z-index: 5;
-            font-family: 'Courier New', monospace;
-            text-shadow: 0 0 5px #0ff;
-            width: 250px;
-            transition: transform 0.3s ease;
-        }
-        #controls.hidden {
-            transform: translateX(-300px);
-        }
-        #toggleControls {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            width: 30px;
-            height: 30px;
-            background-color: rgba(0, 20, 30, 0.7);
-            border: 1px solid #0ff;
-            color: #0ff;
-            border-radius: 50%;
-            z-index: 6;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            box-shadow: 0 0 5px #0ff;
-        }
-        #toggleControls:hover {
-            background-color: #0ff;
-            color: #003;
-            box-shadow: 0 0 15px #0ff;
-        }
-        #shop {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            color: #0ff;
-            background-color: rgba(0, 20, 30, 0.7);
-            padding: 15px;
-            border-radius: 5px;
-            border: 1px solid #0ff;
-            box-shadow: 0 0 10px #0ff, inset 0 0 5px #0ff;
-            z-index: 5;
-            font-family: 'Courier New', monospace;
-            text-shadow: 0 0 5px #0ff;
-            width: 250px;
-            display: none;
-        }
-        button {
-            margin-top: 10px;
-            padding: 8px 15px;
-            cursor: pointer;
-            display: block;
-            width: 100%;
-            background-color: #003;
-            color: #0ff;
-            border: 1px solid #0ff;
-            font-family: 'Courier New', monospace;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            transition: all 0.3s;
-            box-shadow: 0 0 5px #0ff;
-        }
-        button:hover {
-            background-color: #0ff;
-            color: #003;
-            box-shadow: 0 0 15px #0ff;
-        }
-        .config-group {
-            margin: 10px 0;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-size: 14px;
-        }
-        input[type="range"] {
-            width: 100%;
-            background: #003;
-            height: 5px;
-            -webkit-appearance: none;
-            outline: none;
-            border: 1px solid #0ff;
-            box-shadow: 0 0 5px #0ff;
-        }
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 15px;
-            height: 15px;
-            background: #0ff;
-            cursor: pointer;
-            box-shadow: 0 0 5px #0ff;
-        }
-        .value-display {
-            text-align: center;
-            font-size: 16px;
-            margin-top: 5px;
-            color: #0ff;
-        }
-        .upgrade-item {
-            margin: 10px 0;
-            padding: 10px;
-            border: 1px solid #0ff;
-            border-radius: 3px;
-        }
-        .upgrade-item h3 {
-            margin: 0 0 5px 0;
-            color: #0ff;
-        }
-        .upgrade-item p {
-            margin: 5px 0;
-            font-size: 12px;
-        }
-        .upgrade-btn {
-            padding: 5px 10px;
-            font-size: 12px;
-        }
-        .coin-display {
-            font-size: 18px;
-            font-weight: bold;
-            color: #ff0;
-            text-shadow: 0 0 5px #ff0;
-        }
-        .coin-effect {
-            position: absolute;
-            color: #ff0;
-            font-weight: bold;
-            text-shadow: 0 0 5px #ff0;
-            z-index: 10;
-            pointer-events: none;
-            animation: floatUp 1s forwards;
-        }
-        @keyframes floatUp {
-            0% {
-                transform: translateY(0);
-                opacity: 1;
-            }
-            100% {
-                transform: translateY(-50px);
-                opacity: 0;
-            }
-        }
-        .shake {
-            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
-        }
-        @keyframes shake {
-            10%, 90% { transform: translate3d(-2px, 0, 0); }
-            20%, 80% { transform: translate3d(4px, 0, 0); }
-            30%, 50%, 70% { transform: translate3d(-8px, 0, 0); }
-            40%, 60% { transform: translate3d(8px, 0, 0); }
-        }
-    </style>
+   <title>Neon Orbs</title>
+   <style>
+      body {
+         margin: 0;
+         overflow: hidden;
+         background-color: #0a0a12;
+         font-family: 'Courier New', monospace;
+      }
+
+      canvas {
+         display: block;
+         position: absolute;
+         top: 0;
+         left: 0;
+      }
+
+      #gameCanvas {
+         z-index: 1;
+      }
+
+      #glowCanvas {
+         z-index: 2;
+         opacity: 0.8;
+         pointer-events: none;
+      }
+
+      #particlesCanvas {
+         z-index: 3;
+         pointer-events: none;
+      }
+
+      #crtOverlay {
+         position: fixed;
+         top: 0;
+         left: 0;
+         width: 100%;
+         height: 100%;
+         background: linear-gradient(rgba(18, 16, 16, 0.1) 50%, rgba(0, 0, 0, 0.25) 50%),
+            linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+         background-size: 100% 4px, 3px 100%;
+         z-index: 4;
+         pointer-events: none;
+      }
+
+      #controls {
+         position: absolute;
+         top: 60px;
+         left: 20px;
+         color: #0ff;
+         background-color: rgba(0, 20, 30, 0.7);
+         padding: 15px;
+         border-radius: 5px;
+         border: 1px solid #0ff;
+         box-shadow: 0 0 10px #0ff, inset 0 0 5px #0ff;
+         z-index: 5;
+         font-family: 'Courier New', monospace;
+         text-shadow: 0 0 5px #0ff;
+         width: 250px;
+         transition: transform 0.3s ease;
+      }
+
+      #controls.hidden {
+         transform: translateX(-300px);
+      }
+
+      #toggleControls {
+         position: absolute;
+         top: 20px;
+         left: 20px;
+         width: 30px;
+         height: 30px;
+         background-color: rgba(0, 20, 30, 0.7);
+         border: 1px solid #0ff;
+         color: #0ff;
+         border-radius: 50%;
+         z-index: 6;
+         cursor: pointer;
+         display: flex;
+         align-items: center;
+         justify-content: center;
+         font-weight: bold;
+         box-shadow: 0 0 5px #0ff;
+      }
+
+      #toggleControls:hover {
+         background-color: #0ff;
+         color: #003;
+         box-shadow: 0 0 15px #0ff;
+      }
+
+      #shop {
+         position: absolute;
+         top: 20px;
+         right: 20px;
+         color: #0ff;
+         background-color: rgba(0, 20, 30, 0.7);
+         padding: 15px;
+         border-radius: 5px;
+         border: 1px solid #0ff;
+         box-shadow: 0 0 10px #0ff, inset 0 0 5px #0ff;
+         z-index: 5;
+         font-family: 'Courier New', monospace;
+         text-shadow: 0 0 5px #0ff;
+         width: 250px;
+         display: none;
+         max-height: 80vh;
+         /* Add height limit */
+         overflow-y: auto;
+         /* Enable vertical scroll */
+      }
+
+      button {
+         margin-top: 10px;
+         padding: 8px 15px;
+         cursor: pointer;
+         display: block;
+         width: 100%;
+         background-color: #003;
+         color: #0ff;
+         border: 1px solid #0ff;
+         font-family: 'Courier New', monospace;
+         font-weight: bold;
+         text-transform: uppercase;
+         letter-spacing: 1px;
+         transition: all 0.3s;
+         box-shadow: 0 0 5px #0ff;
+      }
+
+      button:hover {
+         background-color: #0ff;
+         color: #003;
+         box-shadow: 0 0 15px #0ff;
+      }
+
+      .config-group {
+         margin: 10px 0;
+      }
+
+      label {
+         display: block;
+         margin-bottom: 5px;
+         font-size: 14px;
+      }
+
+      input[type="range"] {
+         width: 100%;
+         background: #003;
+         height: 5px;
+         -webkit-appearance: none;
+         outline: none;
+         border: 1px solid #0ff;
+         box-shadow: 0 0 5px #0ff;
+      }
+
+      input[type="range"]::-webkit-slider-thumb {
+         -webkit-appearance: none;
+         width: 15px;
+         height: 15px;
+         background: #0ff;
+         cursor: pointer;
+         box-shadow: 0 0 5px #0ff;
+      }
+
+      .value-display {
+         text-align: center;
+         font-size: 16px;
+         margin-top: 5px;
+         color: #0ff;
+      }
+
+      .upgrade-item {
+         margin: 10px 0;
+         padding: 10px;
+         border: 1px solid #0ff;
+         border-radius: 3px;
+      }
+
+      .upgrade-item h3 {
+         margin: 0 0 5px 0;
+         color: #0ff;
+      }
+
+      .upgrade-item p {
+         margin: 5px 0;
+         font-size: 12px;
+      }
+
+      .upgrade-btn {
+         padding: 5px 10px;
+         font-size: 12px;
+      }
+
+      .coin-display {
+         font-size: 18px;
+         font-weight: bold;
+         color: #ff0;
+         text-shadow: 0 0 5px #ff0;
+      }
+
+      .coin-effect {
+         position: absolute;
+         color: #ff0;
+         font-weight: bold;
+         text-shadow: 0 0 5px #ff0;
+         z-index: 10;
+         pointer-events: none;
+         animation: floatUp 1s forwards;
+      }
+
+      @keyframes floatUp {
+         0% {
+            transform: translateY(0);
+            opacity: 1;
+         }
+
+         100% {
+            transform: translateY(-50px);
+            opacity: 0;
+         }
+      }
+
+      .shake {
+         animation: shake 0.5s cubic-bezier(.36, .07, .19, .97) both;
+      }
+
+      @keyframes shake {
+
+         10%,
+         90% {
+            transform: translate3d(-2px, 0, 0);
+         }
+
+         20%,
+         80% {
+            transform: translate3d(4px, 0, 0);
+         }
+
+         30%,
+         50%,
+         70% {
+            transform: translate3d(-8px, 0, 0);
+         }
+
+         40%,
+         60% {
+            transform: translate3d(8px, 0, 0);
+         }
+      }
+   </style>
 </head>
+
 <body>
-    <canvas id="gameCanvas"></canvas>
-    <canvas id="glowCanvas"></canvas>
-    <canvas id="particlesCanvas"></canvas>
-    <div id="crtOverlay"></div>
-    <div id="toggleControls">></div>
-    <div id="controls">
-        <p style="margin-top: 0;">NEON ORB SYSTEM v2.1</p>
-        <p>COINS: <span class="coin-display" id="coinCount">0</span></p>
-        <p>ORBS: <span id="ballCount">0</span></p>
-        <button id="shakeBtn">SYSTEM SHOCK</button>
-        <button id="shopBtn">UPGRADES</button>
-        <button id="clearBtn">PURGE SYSTEM</button>
-        <button id="resetBtn" style="background-color: #900; color: #fff; border: 1px solid #f00; box-shadow: 0 0 5px #f00;">RESET PROGRESS</button>
-    </div>
+   <canvas id="gameCanvas"></canvas>
+   <canvas id="glowCanvas"></canvas>
+   <canvas id="particlesCanvas"></canvas>
+   <div id="crtOverlay"></div>
+   <div id="toggleControls">></div>
+   <div id="controls">
+      <p style="margin-top: 0;">NEON ORB SYSTEM v2.1</p>
+      <p>COINS: <span class="coin-display" id="coinCount">0</span></p>
+      <p>ORBS: <span id="ballCount">0</span></p>
+      <button id="shakeBtn">SYSTEM SHOCK</button>
+      <button id="shopBtn">UPGRADES</button>
+      <button id="clearBtn">PURGE SYSTEM</button>
+      <button id="resetBtn"
+         style="background-color: #900; color: #fff; border: 1px solid #f00; box-shadow: 0 0 5px #f00;">RESET
+         PROGRESS</button>
+      <button id="toggleAutoSpawnBtn">AUTO-SPAWN: OFF</button>
+   </div>
 
-    <div id="shop">
-        <h2>UPGRADE STATION</h2>
-        <p>COINS: <span class="coin-display" id="shopCoinCount">0</span></p>
-        
-        <div class="upgrade-item">
-            <h3>ORB SCORE: <span id="ballScoreLevel">1</span></h3>
-            <p>Start with higher value orbs</p>
-            <p>Cost: <span class="coin-display" id="ballScoreCost">5</span></p>
-            <button class="upgrade-btn" id="upgradeBallScore">UPGRADE</button>
-        </div>
-        
-        <div class="upgrade-item">
-            <h3>SHOCK FORCE: <span id="shakeForceLevel">1</span></h3>
-            <p>More powerful system shocks</p>
-            <p>Cost: <span class="coin-display" id="shakeForceCost">5</span></p>
-            <button class="upgrade-btn" id="upgradeShakeForce">UPGRADE</button>
-        </div>
-        
-        <div class="upgrade-item">
-            <h3>SPAWN RATE: <span id="spawnRateLevel">1</span></h3>
-            <p>Faster orb generation</p>
-            <p>Cost: <span class="coin-display" id="spawnRateCost">5</span></p>
-            <button class="upgrade-btn" id="upgradeSpawnRate">UPGRADE</button>
-        </div>
-        
-        <div class="upgrade-item">
-            <h3>COIN MULTIPLIER: <span id="coinMultiplierLevel">1x</span></h3>
-            <p>Earn more coins from merges/explosions</p>
-            <p>Cost: <span class="coin-display" id="coinMultiplierCost">10</span></p>
-            <button class="upgrade-btn" id="upgradeCoinMultiplier">UPGRADE</button>
-        </div>
-        
-        <button id="closeShopBtn">CLOSE</button>
-    </div>
+   <div id="shop">
+      <h2>UPGRADE STATION</h2>
+      <p>COINS: <span class="coin-display" id="shopCoinCount">0</span></p>
 
-    <script>
-        // Game elements
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const glowCanvas = document.getElementById('glowCanvas');
-        const glowCtx = glowCanvas.getContext('2d');
-        const particlesCanvas = document.getElementById('particlesCanvas');
-        const particlesCtx = particlesCanvas.getContext('2d');
-        
-        // UI elements
-        const ballCountDisplay = document.getElementById('ballCount');
-        const coinCountDisplay = document.getElementById('coinCount');
-        const shopCoinCountDisplay = document.getElementById('shopCoinCount');
-        const clearBtn = document.getElementById('clearBtn');
-        const shakeBtn = document.getElementById('shakeBtn');
-        const shopBtn = document.getElementById('shopBtn');
-        const closeShopBtn = document.getElementById('closeShopBtn');
-        const shop = document.getElementById('shop');
-        const controls = document.getElementById('controls');
-        const toggleControlsBtn = document.getElementById('toggleControls');
-        
-        // Upgrade elements
-        const ballScoreLevelDisplay = document.getElementById('ballScoreLevel');
-        const ballScoreCostDisplay = document.getElementById('ballScoreCost');
-        const shakeForceLevelDisplay = document.getElementById('shakeForceLevel');
-        const shakeForceCostDisplay = document.getElementById('shakeForceCost');
-        const spawnRateLevelDisplay = document.getElementById('spawnRateLevel');
-        const spawnRateCostDisplay = document.getElementById('spawnRateCost');
-        const coinMultiplierLevelDisplay = document.getElementById('coinMultiplierLevel');
-        const coinMultiplierCostDisplay = document.getElementById('coinMultiplierCost');
-        const upgradeBallScoreBtn = document.getElementById('upgradeBallScore');
-        const upgradeShakeForceBtn = document.getElementById('upgradeShakeForce');
-        const upgradeSpawnRateBtn = document.getElementById('upgradeSpawnRate');
-        const upgradeCoinMultiplierBtn = document.getElementById('upgradeCoinMultiplier');
+      <div class="upgrade-item">
+         <h3>ORB SCORE: <span id="ballScoreLevel">1</span></h3>
+         <p>Start with higher value orbs</p>
+         <p>Cost: <span class="coin-display" id="ballScoreCost">5</span></p>
+         <button class="upgrade-btn" id="upgradeBallScore">UPGRADE</button>
+      </div>
 
-        // Set canvas size to window size
-        function resizeCanvases() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            glowCanvas.width = window.innerWidth;
-            glowCanvas.height = window.innerHeight;
-            particlesCanvas.width = window.innerWidth;
-            particlesCanvas.height = window.innerHeight;
-        }
-        resizeCanvases();
-        
-        let isMouseDown = false;
+      <div class="upgrade-item">
+         <h3>SHOCK FORCE: <span id="shakeForceLevel">1</span></h3>
+         <p>More powerful system shocks</p>
+         <p>Cost: <span class="coin-display" id="shakeForceCost">5</span></p>
+         <button class="upgrade-btn" id="upgradeShakeForce">UPGRADE</button>
+      </div>
 
-        canvas.addEventListener('mousedown', (event) => {
-            isMouseDown = true;
+      <div class="upgrade-item">
+         <h3>SPAWN RATE: <span id="spawnRateLevel">1</span></h3>
+         <p>Faster orb generation</p>
+         <p>Cost: <span class="coin-display" id="spawnRateCost">5</span></p>
+         <button class="upgrade-btn" id="upgradeSpawnRate">UPGRADE</button>
+      </div>
+
+      <div class="upgrade-item">
+         <h3>COIN MULTIPLIER: <span id="coinMultiplierLevel">1x</span></h3>
+         <p>Earn more coins from merges/explosions</p>
+         <p>Cost: <span class="coin-display" id="coinMultiplierCost">10</span></p>
+         <button class="upgrade-btn" id="upgradeCoinMultiplier">UPGRADE</button>
+      </div>
+
+      <div class="upgrade-item">
+         <h3>AUTO-SPAWN RATE: <span id="autoSpawnRateLevel">1</span></h3>
+         <p>Decrease auto-spawn interval</p>
+         <p>Cost: <span class="coin-display" id="autoSpawnRateCost">10</span></p>
+         <button class="upgrade-btn" id="upgradeAutoSpawnRate">UPGRADE</button>
+      </div>
+
+      <button id="closeShopBtn">CLOSE</button>
+   </div>
+
+   <script>
+      // Game elements
+      const canvas = document.getElementById('gameCanvas');
+      const ctx = canvas.getContext('2d');
+      const glowCanvas = document.getElementById('glowCanvas');
+      const glowCtx = glowCanvas.getContext('2d');
+      const particlesCanvas = document.getElementById('particlesCanvas');
+      const particlesCtx = particlesCanvas.getContext('2d');
+
+      // UI elements
+      const ballCountDisplay = document.getElementById('ballCount');
+      const coinCountDisplay = document.getElementById('coinCount');
+      const shopCoinCountDisplay = document.getElementById('shopCoinCount');
+      const clearBtn = document.getElementById('clearBtn');
+      const shakeBtn = document.getElementById('shakeBtn');
+      const shopBtn = document.getElementById('shopBtn');
+      const closeShopBtn = document.getElementById('closeShopBtn');
+      const shop = document.getElementById('shop');
+      const controls = document.getElementById('controls');
+      const toggleControlsBtn = document.getElementById('toggleControls');
+      const toggleAutoSpawnBtn = document.getElementById('toggleAutoSpawnBtn');
+      const autoSpawnRateLevelDisplay = document.getElementById('autoSpawnRateLevel');
+      const autoSpawnRateCostDisplay = document.getElementById('autoSpawnRateCost');
+      const upgradeAutoSpawnRateBtn = document.getElementById('upgradeAutoSpawnRate');
+
+      // Upgrade elements
+      const ballScoreLevelDisplay = document.getElementById('ballScoreLevel');
+      const ballScoreCostDisplay = document.getElementById('ballScoreCost');
+      const shakeForceLevelDisplay = document.getElementById('shakeForceLevel');
+      const shakeForceCostDisplay = document.getElementById('shakeForceCost');
+      const spawnRateLevelDisplay = document.getElementById('spawnRateLevel');
+      const spawnRateCostDisplay = document.getElementById('spawnRateCost');
+      const coinMultiplierLevelDisplay = document.getElementById('coinMultiplierLevel');
+      const coinMultiplierCostDisplay = document.getElementById('coinMultiplierCost');
+      const upgradeBallScoreBtn = document.getElementById('upgradeBallScore');
+      const upgradeShakeForceBtn = document.getElementById('upgradeShakeForce');
+      const upgradeSpawnRateBtn = document.getElementById('upgradeSpawnRate');
+      const upgradeCoinMultiplierBtn = document.getElementById('upgradeCoinMultiplier');
+
+      // Set canvas size to window size
+      function resizeCanvases() {
+         canvas.width = window.innerWidth;
+         canvas.height = window.innerHeight;
+         glowCanvas.width = window.innerWidth;
+         glowCanvas.height = window.innerHeight;
+         particlesCanvas.width = window.innerWidth;
+         particlesCanvas.height = window.innerHeight;
+      }
+      resizeCanvases();
+
+      let isMouseDown = false;
+
+      canvas.addEventListener('mousedown', (event) => {
+         isMouseDown = true;
+         spawnBall(event.clientX, event.clientY);
+      });
+
+      canvas.addEventListener('mouseup', () => {
+         isMouseDown = false;
+      });
+
+      canvas.addEventListener('mousemove', (event) => {
+         if (isMouseDown) {
             spawnBall(event.clientX, event.clientY);
-        });
+         }
+      });
 
-        canvas.addEventListener('mouseup', () => {
-            isMouseDown = false;
-        });
+      // Cyberpunk neon colors
+      const BALL_COLORS = [
+         '#ff00ff', // Neon pink
+         '#00ffff', // Cyan
+         '#ffff00', // Yellow
+         '#ff00aa', // Hot pink
+         '#00ffaa'  // Aqua green
+      ];
 
-        canvas.addEventListener('mousemove', (event) => {
-            if (isMouseDown) {
-                spawnBall(event.clientX, event.clientY);
-            }
-        });
-        
-        // Cyberpunk neon colors
-        const BALL_COLORS = [
-            '#ff00ff', // Neon pink
-            '#00ffff', // Cyan
-            '#ffff00', // Yellow
-            '#ff00aa', // Hot pink
-            '#00ffaa'  // Aqua green
-        ];
-        
-        // Game state
-        let balls = [];
-        let ballCount = 0;
-        let isShaking = false;
-        let coins = 0;
-        let lastSpawnTime = 0;
-        let spawnDelay = 0; // No delay initially
-        
-        // Upgrade state
-        const upgrades = {
-            ballScore: {
-                level: 1,
-                cost: 5,
-                costMultiplier: 2
-            },
-            shakeForce: {
-                level: 1,
-                cost: 5,
-                costMultiplier: 2
-            },
-            spawnRate: {
-                level: 1,
-                cost: 5,
-                costMultiplier: 2
-            },
-            coinMultiplier: {
-                level: 1,
-                cost: 10,
-                costMultiplier: 2
-            }
-        };
-        
-        // Load upgrades from local storage
-        function loadUpgrades() {
-            const savedUpgrades = localStorage.getItem('upgrades');
-            if (savedUpgrades) {
-                const parsedUpgrades = JSON.parse(savedUpgrades);
-                Object.keys(upgrades).forEach(key => {
-                   upgrades[key].level = parsedUpgrades[key].level;
-                   upgrades[key].cost = parsedUpgrades[key].cost;
-                });
-            }
-        }
+      // Game state
+      let balls = [];
+      let ballCount = 0;
+      let isShaking = false;
+      let coins = 0;
+      let lastSpawnTime = 0;
+      let spawnDelay = 0; // No delay initially
+      let autoSpawnEnabled = false;
+      let autoSpawnInterval = 10000; // Start at 10 seconds
+      let autoSpawnTimer = null;
 
-        // Save upgrades to local storage
-        function saveUpgrades() {
-            localStorage.setItem('upgrades', JSON.stringify(upgrades));
-        }
+      // Upgrade state
+      const upgrades = {
+         ballScore: {
+            level: 1,
+            cost: 5,
+            costMultiplier: 2
+         },
+         shakeForce: {
+            level: 1,
+            cost: 5,
+            costMultiplier: 2
+         },
+         spawnRate: {
+            level: 1,
+            cost: 5,
+            costMultiplier: 2
+         },
+         coinMultiplier: {
+            level: 1,
+            cost: 10,
+            costMultiplier: 2
+         },
+         autoSpawn: {
+            level: 1,
+            cost: 10,
+            costMultiplier: 2,
+            minInterval: 200
+         }
+      };
 
-        // Particle system
-        let particles = [];
-        
-        class Particle {
-            constructor(x, y, color) {
-                this.x = x;
-                this.y = y;
-                this.color = color;
-                this.radius = Math.random() * 3 + 1;
-                this.velocity = {
-                    x: (Math.random() - 0.5) * 8,
-                    y: (Math.random() - 0.5) * 8
-                };
-                this.alpha = 1;
-                this.decay = Math.random() * 0.03 + 0.02;
-            }
-            
-            draw() {
-                particlesCtx.save();
-                particlesCtx.globalAlpha = this.alpha;
-                particlesCtx.beginPath();
-                particlesCtx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                particlesCtx.fillStyle = this.color;
-                particlesCtx.fill();
-                particlesCtx.closePath();
-                particlesCtx.restore();
-            }
-            
-            update() {
-                this.velocity.y += 0.05; // Gravity
-                this.x += this.velocity.x;
-                this.y += this.velocity.y;
-                this.alpha -= this.decay;
-                this.draw();
-                return this.alpha > 0;
-            }
-        }
-        
-        // Create explosion effect
-        function createExplosion(x, y, color, count = 30) {
-            for (let i = 0; i < count; i++) {
-                particles.push(new Particle(x, y, color));
-            }
-        }
-        
-        // Show coin gain effect
-        function showCoinGain(x, y, amount) {
-            const coinElement = document.createElement('div');
-            coinElement.className = 'coin-effect';
-            coinElement.textContent = `+${amount}`;
-            coinElement.style.left = `${x}px`;
-            coinElement.style.top = `${y}px`;
-            document.body.appendChild(coinElement);
-            
-            setTimeout(() => {
-                coinElement.remove();
-            }, 1000);
-        }
-        
-        // Add coins to player
-        function addCoins(amount, x, y) {
-            const multiplier = upgrades.coinMultiplier.level;
-            const totalAmount = amount * multiplier;
-            coins += totalAmount;
-            updateCoinDisplay();
-            
-            if (x && y) {
-                showCoinGain(x, y, totalAmount);
-            }
-        }
-        
-        // Update coin display in all locations
-        function updateCoinDisplay() {
-            coinCountDisplay.textContent = coins;
-            shopCoinCountDisplay.textContent = coins;
-        }
-        
-        // Update upgrade displays
-        function updateUpgradeDisplays() {
-            ballScoreLevelDisplay.textContent = upgrades.ballScore.level;
-            ballScoreCostDisplay.textContent = upgrades.ballScore.cost;
-            
-            shakeForceLevelDisplay.textContent = upgrades.shakeForce.level;
-            shakeForceCostDisplay.textContent = upgrades.shakeForce.cost;
-            
-            spawnRateLevelDisplay.textContent = upgrades.spawnRate.level;
-            spawnRateCostDisplay.textContent = upgrades.spawnRate.cost;
-            
-            coinMultiplierLevelDisplay.textContent = `${upgrades.coinMultiplier.level}x`;
-            coinMultiplierCostDisplay.textContent = upgrades.coinMultiplier.cost;
-            
-            // Calculate spawn delay based on upgrade level (lower is better)
-            spawnDelay = Math.max(0, 500 - (upgrades.spawnRate.level * 50));
-        }
-        
-        // Grid background
-        function drawGrid() {
-            ctx.fillStyle = '#0a0a12';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            ctx.strokeStyle = 'rgba(0, 255, 255, 0.05)';
-            ctx.lineWidth = 1;
-            
-            // Vertical lines
-            for (let x = 0; x < canvas.width; x += 40) {
-                ctx.beginPath();
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, canvas.height);
-                ctx.stroke();
-            }
-            
-            // Horizontal lines
-            for (let y = 0; y < canvas.height; y += 40) {
-                ctx.beginPath();
-                ctx.moveTo(0, y);
-                ctx.lineTo(canvas.width, y);
-                ctx.stroke();
-            }
-        }
-        
-        // Ball class
-        class Ball {
-            constructor(x, y, number = 1) {
-                this.x = x;
-                this.y = y;
-                this.number = number;
-                this.radius = calcRadius(number);
-                this.dx = (Math.random() - 0.5) * 8;
-                this.dy = (Math.random() - 0.5) * 8;
-                this.color = BALL_COLORS[Math.floor(Math.random() * BALL_COLORS.length)];
-                this.mass = this.radius * 0.5; // Mass based on size
-                this.glowIntensity = 0.5 + Math.random() * 0.5; // Random glow intensity
-            }
-            
-            draw() {
-                // Draw ball
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                ctx.fillStyle = this.color;
-                ctx.fill();
-                ctx.closePath();
-                
-                // Draw inner glow
-                const gradient = ctx.createRadialGradient(
-                    this.x, this.y, 0,
-                    this.x, this.y, this.radius
-                );
-                gradient.addColorStop(0, this.color);
-                gradient.addColorStop(1, 'rgba(0,0,0,0)');
-                
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                ctx.fillStyle = gradient;
-                ctx.fill();
-                ctx.closePath();
-                
-                // Draw number
-                ctx.fillStyle = getContrastColor(this.color);
-                ctx.font = `${Math.max(12, this.radius/2)}px 'Courier New', monospace`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(this.number.toString(), this.x, this.y);
-            }
-            
-            drawGlow() {
-                // Draw glow effect
-                glowCtx.beginPath();
-                glowCtx.arc(this.x, this.y, this.radius * 2, 0, Math.PI * 2);
-                const glowGradient = glowCtx.createRadialGradient(
-                    this.x, this.y, 0,
-                    this.x, this.y, this.radius * 2
-                );
-                glowGradient.addColorStop(0, this.color);
-                glowGradient.addColorStop(1, 'rgba(0,0,0,0)');
-                glowCtx.fillStyle = glowGradient;
-                glowCtx.globalCompositeOperation = 'lighter';
-                glowCtx.fill();
-                glowCtx.closePath();
-            }
-            
-            update() {
-                // Bounce off walls
-                if (this.x + this.radius > canvas.width) {
-                    this.x = canvas.width - this.radius;
-                    this.dx = -this.dx * 0.9;
-                } else if (this.x - this.radius < 0) {
-                    this.x = this.radius;
-                    this.dx = -this.dx * 0.9;
-                }
-                
-                if (this.y + this.radius > canvas.height) {
-                    this.y = canvas.height - this.radius;
-                    this.dy = -this.dy * 0.9;
-                } else if (this.y - this.radius < 0) {
-                    this.y = this.radius;
-                    this.dy = -this.dy * 0.9;
-                }
-                
-                this.x += this.dx;
-                this.y += this.dy;
-                
-                this.draw();
-                this.drawGlow();
-            }
-            
-            // Launch ball in random direction
-            launch() {
-                const angle = Math.random() * Math.PI * 2;
-                const speed = 15 + Math.random() * 10 * (upgrades.shakeForce.level * 0.5);
-                this.dx = Math.cos(angle) * speed;
-                this.dy = Math.sin(angle) * speed;
-            }
-        }
-        
-        // Get contrasting text color for better visibility
-        function getContrastColor(hexColor) {
-            // Convert hex to RGB
-            const r = parseInt(hexColor.substr(1, 2), 16);
-            const g = parseInt(hexColor.substr(3, 2), 16);
-            const b = parseInt(hexColor.substr(5, 2), 16);
-            
-            // Calculate luminance
-            const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-            
-            // Return black or white depending on luminance
-            return luminance > 0.5 ? '#000000' : '#ffffff';
-        }
-
-        function calcRadius(number) {
-            const baseSize = Math.min(window.innerWidth, window.innerHeight) / 50;
-            return baseSize + number * 2;
-        }
-        
-        // Spawn a single ball at position
-        function spawnBall(x, y) {
-            // Check if we can spawn yet (cooldown)
-            const now = Date.now();
-            if (now - lastSpawnTime < spawnDelay) return;
-            lastSpawnTime = now;
-            
-            // Don't spawn if it would overlap with existing balls
-            let canSpawn = true;
-            for (let j = 0; j < balls.length; j++) {
-                const dx = x - balls[j].x;
-                const dy = y - balls[j].y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                if (distance < balls[j].radius + 20) {
-                    canSpawn = false;
-                    break;
-                }
-            }
-            
-            if (canSpawn) {
-                balls.push(new Ball(x, y, upgrades.ballScore.level));
-                ballCount++;
-                ballCountDisplay.textContent = ballCount;
-            }
-        }
-        
-        // Check for collisions between balls
-        function checkCollisions() {
-            const ballsToRemove = new Set();
-            const explosions = [];
-            
-            for (let i = 0; i < balls.length; i++) {
-                if (ballsToRemove.has(i)) continue;
-                
-                for (let j = i + 1; j < balls.length; j++) {
-                    if (ballsToRemove.has(j)) continue;
-                    
-                    const ball1 = balls[i];
-                    const ball2 = balls[j];
-                    
-                    const dx = ball2.x - ball1.x;
-                    const dy = ball2.y - ball1.y;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-                    
-                    // Collision detected
-                    if (distance < ball1.radius + ball2.radius) {
-                        // Check if balls are the same color
-                        if (ball1.color === ball2.color) {
-                            // Merge balls - add numbers and create new bigger ball
-                            const newNumber = ball1.number + ball2.number;
-                            const midX = (ball1.x + ball2.x) / 2;
-                            const midY = (ball1.y + ball2.y) / 2;
-                            
-                            // Check if we should explode instead of merge
-                            if (newNumber >= 100) {
-                                explosions.push({
-                                    x: midX,
-                                    y: midY,
-                                    color: ball1.color
-                                });
-                                ballsToRemove.add(i);
-                                ballsToRemove.add(j);
-                                const remainingValue = newNumber - 50;
-                                addCoins(remainingValue, midX, midY); // Reward for explosion
-                                break;
-                            }
-                            
-                            const newDx = (ball1.dx + ball2.dx) / 2;
-                            const newDy = (ball1.dy + ball2.dy) / 2;
-                            
-                            // Create new merged ball
-                            const newBall = new Ball(midX, midY, newNumber);
-                            newBall.radius = calcRadius(newNumber);
-                            newBall.color = ball1.color;
-                            newBall.dx = newDx;
-                            newBall.dy = newDy;
-                            newBall.mass = newBall.radius * 0.5;
-                            
-                            // Mark old balls for removal and add new one
-                            ballsToRemove.add(i);
-                            ballsToRemove.add(j);
-                            balls.push(newBall);
-                            
-                            // Add coins for merge
-                            addCoins(1, midX, midY);
-                            
-                            // Skip further checks for these balls
-                            break;
-                        } else {
-                            // Regular collision for different colors
-                            const angle = Math.atan2(dy, dx);
-                            
-                            const velocity1 = Math.sqrt(ball1.dx * ball1.dx + ball1.dy * ball1.dy);
-                            const velocity2 = Math.sqrt(ball2.dx * ball2.dx + ball2.dy * ball2.dy);
-                            
-                            const direction1 = Math.atan2(ball1.dy, ball1.dx);
-                            const direction2 = Math.atan2(ball2.dy, ball2.dx);
-                            
-                            const velocityX1 = velocity1 * Math.cos(direction1 - angle);
-                            const velocityY1 = velocity1 * Math.sin(direction1 - angle);
-                            const velocityX2 = velocity2 * Math.cos(direction2 - angle);
-                            const velocityY2 = velocity2 * Math.sin(direction2 - angle);
-                            
-                            const finalVelocityX1 = ((ball1.mass - ball2.mass) * velocityX1 + 2 * ball2.mass * velocityX2) / (ball1.mass + ball2.mass);
-                            const finalVelocityX2 = ((ball2.mass - ball1.mass) * velocityX2 + 2 * ball1.mass * velocityX1) / (ball1.mass + ball2.mass);
-                            
-                            ball1.dx = Math.cos(angle) * finalVelocityX1 + Math.cos(angle + Math.PI/2) * velocityY1;
-                            ball1.dy = Math.sin(angle) * finalVelocityX1 + Math.sin(angle + Math.PI/2) * velocityY1;
-                            ball2.dx = Math.cos(angle) * finalVelocityX2 + Math.cos(angle + Math.PI/2) * velocityY2;
-                            ball2.dy = Math.sin(angle) * finalVelocityX2 + Math.sin(angle + Math.PI/2) * velocityY2;
-                            
-                            const overlap = (ball1.radius + ball2.radius - distance) / 2;
-                            ball1.x -= overlap * Math.cos(angle);
-                            ball1.y -= overlap * Math.sin(angle);
-                            ball2.x += overlap * Math.cos(angle);
-                            ball2.y += overlap * Math.sin(angle);
-                        }
-                    }
-                }
-            }
-            
-            // Create explosions
-            explosions.forEach(exp => {
-                createExplosion(exp.x, exp.y, exp.color, 50);
+      // Load upgrades from local storage
+      function loadUpgrades() {
+         const savedUpgrades = localStorage.getItem('upgrades');
+         if (savedUpgrades) {
+            const parsedUpgrades = JSON.parse(savedUpgrades);
+            Object.keys(upgrades).forEach(key => {
+               upgrades[key].level = parsedUpgrades[key].level;
+               upgrades[key].cost = parsedUpgrades[key].cost;
             });
-            
-            // Remove merged balls
-            if (ballsToRemove.size > 0) {
-                balls = balls.filter((_, index) => !ballsToRemove.has(index));
-                ballCount = balls.length;
-                ballCountDisplay.textContent = ballCount;
-            }
-        }
-        
-        // Shake screen and launch all balls
-        function shakeScreen() {
-            if (isShaking || balls.length === 0) return;
-            
-            isShaking = true;
-            document.body.classList.add('shake');
-            
-            // Launch all balls in random directions
-            balls.forEach(ball => ball.launch());
-            
-            // Remove shake class after animation
-            setTimeout(() => {
-                document.body.classList.remove('shake');
-                isShaking = false;
-            }, 500);
-        }
-        
-        // Spawn initial balls
-        function init() {
-            for (let i = 0; i < 3; i++) {
-                spawnBall(
-                    Math.random() * (canvas.width - 100) + 50,
-                    Math.random() * (canvas.height - 100) + 50
-                );
-            }
-            updateUpgradeDisplays();
-        }
-        
-        // Clear all balls
-        function clearBalls() {
-            balls = [];
-            ballCount = 0;
-            ballCountDisplay.textContent = ballCount;
-            glowCtx.clearRect(0, 0, glowCanvas.width, glowCanvas.height);
-            particlesCtx.clearRect(0, 0, particlesCanvas.width, particlesCanvas.height);
-            particles = [];
-        }
-        
-        // Upgrade functions
-        function upgradeBallScore() {
-            const upgrade = upgrades.ballScore;
-            if (coins >= upgrade.cost) {
-                coins -= upgrade.cost;
-                upgrade.level++;
-                upgrade.cost *= upgrade.costMultiplier;
-                updateCoinDisplay();
-                updateUpgradeDisplays();
-                saveUpgrades();
-            }
-        }
-        
-        function upgradeShakeForce() {
-            const upgrade = upgrades.shakeForce;
-            if (coins >= upgrade.cost) {
-                coins -= upgrade.cost;
-                upgrade.level++;
-                upgrade.cost *= upgrade.costMultiplier;
-                updateCoinDisplay();
-                updateUpgradeDisplays();
-                saveUpgrades();
-            }
-        }
-        
-        function upgradeSpawnRate() {
-            const upgrade = upgrades.spawnRate;
-            if (coins >= upgrade.cost) {
-                coins -= upgrade.cost;
-                upgrade.level++;
-                upgrade.cost *= upgrade.costMultiplier;
-                updateCoinDisplay();
-                updateUpgradeDisplays();
-                saveUpgrades();
-            }
-        }
-        
-        function upgradeCoinMultiplier() {
-            const upgrade = upgrades.coinMultiplier;
-            if (coins >= upgrade.cost) {
-                coins -= upgrade.cost;
-                upgrade.level++;
-                upgrade.cost *= upgrade.costMultiplier;
-                updateCoinDisplay();
-                updateUpgradeDisplays();
-                saveUpgrades();
-            }
-        }
-        
-        // Reset all progress
-        function resetProgress() {
-            if (confirm("Are you sure you want to reset all progress? This action cannot be undone.")) {
-                localStorage.clear();
-                coins = 0;
-                ballCount = 0;
-                balls = [];
-                Object.keys(upgrades).forEach(key => {
-                    upgrades[key].level = 1;
-                    upgrades[key].cost = key === 'coinMultiplier' ? 10 : 5;
-                });
-                updateCoinDisplay();
-                updateUpgradeDisplays();
-                clearBalls();
-            }
-        }
+         }
+      }
 
-        // Animation loop
-        function animate() {
-            requestAnimationFrame(animate);
-            
-            // Clear canvases
-            drawGrid();
-            glowCtx.clearRect(0, 0, glowCanvas.width, glowCanvas.height);
-            particlesCtx.clearRect(0, 0, particlesCanvas.width, particlesCanvas.height);
-            
-            checkCollisions();
-            
-            // Update particles
-            particles = particles.filter(particle => particle.update());
-            
-            for (let i = 0; i < balls.length; i++) {
-                balls[i].update();
+      // Save upgrades to local storage
+      function saveUpgrades() {
+         localStorage.setItem('upgrades', JSON.stringify(upgrades));
+      }
+
+      // Particle system
+      let particles = [];
+
+      class Particle {
+         constructor(x, y, color) {
+            this.x = x;
+            this.y = y;
+            this.color = color;
+            this.radius = Math.random() * 3 + 1;
+            this.velocity = {
+               x: (Math.random() - 0.5) * 8,
+               y: (Math.random() - 0.5) * 8
+            };
+            this.alpha = 1;
+            this.decay = Math.random() * 0.03 + 0.02;
+         }
+
+         draw() {
+            particlesCtx.save();
+            particlesCtx.globalAlpha = this.alpha;
+            particlesCtx.beginPath();
+            particlesCtx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            particlesCtx.fillStyle = this.color;
+            particlesCtx.fill();
+            particlesCtx.closePath();
+            particlesCtx.restore();
+         }
+
+         update() {
+            this.velocity.y += 0.05; // Gravity
+            this.x += this.velocity.x;
+            this.y += this.velocity.y;
+            this.alpha -= this.decay;
+            this.draw();
+            return this.alpha > 0;
+         }
+      }
+
+      // Create explosion effect
+      function createExplosion(x, y, color, count = 60) { // Increase particles to 60
+         for (let i = 0; i < count; i++) {
+            particles.push(new Particle(x, y, color));
+         }
+      }
+
+      // Show coin gain effect
+      function showCoinGain(x, y, amount) {
+         const coinElement = document.createElement('div');
+         coinElement.className = 'coin-effect';
+         coinElement.textContent = `+${amount}`;
+         coinElement.style.left = `${x}px`;
+         coinElement.style.top = `${y}px`;
+         document.body.appendChild(coinElement);
+
+         setTimeout(() => {
+            coinElement.remove();
+         }, 1000);
+      }
+
+      // Add coins to player
+      function addCoins(amount, x, y) {
+         const multiplier = upgrades.coinMultiplier.level;
+         const totalAmount = amount * multiplier;
+         coins += totalAmount;
+         updateCoinDisplay();
+
+         if (x && y) {
+            showCoinGain(x, y, totalAmount);
+         }
+      }
+
+      // Update coin display in all locations
+      function updateCoinDisplay() {
+         coinCountDisplay.textContent = formatNumber(coins);
+         shopCoinCountDisplay.textContent = formatNumber(coins);
+      }
+
+      function formatNumber(value) {
+         const suffixes = ['', 'K', 'M', 'B', 'T', 'q', 'Q', 's', 'S', 'O', 'N', 'KK', 'MM'];
+         let tier = Math.floor(Math.log10(value) / 3);
+         if (tier === 0) return value.toString();
+         tier = Math.min(tier, suffixes.length - 1);
+         const suffix = suffixes[tier];
+         const scaled = value / Math.pow(10, tier * 3);
+         return scaled.toFixed(1) + suffix;
+      }
+
+      // Update upgrade displays
+      function updateUpgradeDisplays() {
+         ballScoreLevelDisplay.textContent = upgrades.ballScore.level;
+         ballScoreCostDisplay.textContent = formatNumber(upgrades.ballScore.cost);
+
+         shakeForceLevelDisplay.textContent = upgrades.shakeForce.level;
+         shakeForceCostDisplay.textContent = formatNumber(upgrades.shakeForce.cost);
+
+         spawnRateLevelDisplay.textContent = upgrades.spawnRate.level;
+         spawnRateCostDisplay.textContent = formatNumber(upgrades.spawnRate.cost);
+
+         coinMultiplierLevelDisplay.textContent = `${upgrades.coinMultiplier.level}x`;
+         coinMultiplierCostDisplay.textContent = formatNumber(upgrades.coinMultiplier.cost);
+
+         autoSpawnRateLevelDisplay.textContent = upgrades.autoSpawn.level;
+         autoSpawnRateCostDisplay.textContent = formatNumber(upgrades.autoSpawn.cost);
+
+         // Calculate spawn delay based on upgrade level (lower is better)
+         spawnDelay = Math.max(0, 500 - (upgrades.spawnRate.level * 50));
+      }
+
+      // Grid background
+      function drawGrid() {
+         ctx.fillStyle = '#0a0a12';
+         ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+         ctx.strokeStyle = 'rgba(0, 255, 255, 0.05)';
+         ctx.lineWidth = 1;
+
+         // Vertical lines
+         for (let x = 0; x < canvas.width; x += 40) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, canvas.height);
+            ctx.stroke();
+         }
+
+         // Horizontal lines
+         for (let y = 0; y < canvas.height; y += 40) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(canvas.width, y);
+            ctx.stroke();
+         }
+      }
+
+      // Ball class
+      class Ball {
+         constructor(x, y, number = 1) {
+            this.x = x;
+            this.y = y;
+            this.number = number;
+            this.radius = calcRadius(number);
+            this.dx = (Math.random() - 0.5) * 8;
+            this.dy = (Math.random() - 0.5) * 8;
+            this.color = BALL_COLORS[Math.floor(Math.random() * BALL_COLORS.length)];
+            this.mass = this.radius * 0.5; // Mass based on size
+            this.glowIntensity = 0.5 + Math.random() * 0.5; // Random glow intensity
+         }
+
+         draw() {
+            // Draw ball
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fillStyle = this.color;
+            ctx.fill();
+            ctx.closePath();
+
+            // Draw inner glow
+            const gradient = ctx.createRadialGradient(
+               this.x, this.y, 0,
+               this.x, this.y, this.radius
+            );
+            gradient.addColorStop(0, this.color);
+            gradient.addColorStop(1, 'rgba(0,0,0,0)');
+
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fillStyle = gradient;
+            ctx.fill();
+            ctx.closePath();
+
+            // Draw number
+            ctx.fillStyle = getContrastColor(this.color);
+            ctx.font = `${Math.max(12, this.radius / 2)}px 'Courier New', monospace`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(this.number.toString(), this.x, this.y);
+         }
+
+         drawGlow() {
+            // Draw glow effect
+            glowCtx.beginPath();
+            glowCtx.arc(this.x, this.y, this.radius * 3, 0, Math.PI * 2); // Increase glow range
+            const glowGradient = glowCtx.createRadialGradient(
+               this.x, this.y, 0,
+               this.x, this.y, this.radius * 3
+            );
+            glowGradient.addColorStop(0, this.color);
+            glowGradient.addColorStop(1, 'rgba(0,0,0,0)');
+            glowCtx.fillStyle = glowGradient;
+            glowCtx.globalCompositeOperation = 'lighter';
+            glowCtx.fill();
+            glowCtx.closePath();
+         }
+
+         update() {
+            // Bounce off walls
+            if (this.x + this.radius > canvas.width) {
+               this.x = canvas.width - this.radius;
+               this.dx = -this.dx * 0.9;
+            } else if (this.x - this.radius < 0) {
+               this.x = this.radius;
+               this.dx = -this.dx * 0.9;
             }
-        }
-        
-        // Toggle controls visibility
-        function toggleControls() {
-            controls.classList.toggle('hidden');
-            toggleControlsBtn.textContent = controls.classList.contains('hidden') ? '>' : '<';
-        }
-        
-        // Event listeners
-        canvas.addEventListener('click', (event) => {
-            spawnBall(event.clientX, event.clientY);
-        });
-        
-        clearBtn.addEventListener('click', clearBalls);
-        shakeBtn.addEventListener('click', shakeScreen);
-        shopBtn.addEventListener('click', () => shop.style.display = 'block');
-        closeShopBtn.addEventListener('click', () => shop.style.display = 'none');
-        upgradeBallScoreBtn.addEventListener('click', upgradeBallScore);
-        upgradeShakeForceBtn.addEventListener('click', upgradeShakeForce);
-        upgradeSpawnRateBtn.addEventListener('click', upgradeSpawnRate);
-        upgradeCoinMultiplierBtn.addEventListener('click', upgradeCoinMultiplier);
-        const resetBtn = document.getElementById('resetBtn');
-        resetBtn.addEventListener('click', resetProgress);
-        toggleControlsBtn.addEventListener('click', toggleControls);
-        
-        window.addEventListener('resize', () => {
-            resizeCanvases();
-            drawGrid();
-        });
-        
-        // Start the game
-        loadUpgrades();
-        init();
-        animate();
-        toggleControls();
-    </script>
+
+            if (this.y + this.radius > canvas.height) {
+               this.y = canvas.height - this.radius;
+               this.dy = -this.dy * 0.9;
+            } else if (this.y - this.radius < 0) {
+               this.y = this.radius;
+               this.dy = -this.dy * 0.9;
+            }
+
+            this.x += this.dx;
+            this.y += this.dy;
+
+            this.draw();
+            this.drawGlow();
+         }
+
+         // Launch ball in random direction
+         launch() {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = 15 + Math.random() * 10 * (upgrades.shakeForce.level * 0.5);
+            this.dx = Math.cos(angle) * speed;
+            this.dy = Math.sin(angle) * speed;
+         }
+      }
+
+      // Get contrasting text color for better visibility
+      function getContrastColor(hexColor) {
+         // Convert hex to RGB
+         const r = parseInt(hexColor.substr(1, 2), 16);
+         const g = parseInt(hexColor.substr(3, 2), 16);
+         const b = parseInt(hexColor.substr(5, 2), 16);
+
+         // Calculate luminance
+         const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+
+         // Return black or white depending on luminance
+         return luminance > 0.5 ? '#000000' : '#ffffff';
+      }
+
+      function calcRadius(number) {
+         const baseSize = Math.min(window.innerWidth, window.innerHeight) / 50;
+         return baseSize + number * 2;
+      }
+
+      // Spawn a single ball at position
+      function spawnBall(x, y) {
+         // Check if we can spawn yet (cooldown)
+         const now = Date.now();
+         if (now - lastSpawnTime < spawnDelay) return;
+         lastSpawnTime = now;
+
+         // Don't spawn if it would overlap with existing balls
+         let canSpawn = true;
+         for (let j = 0; j < balls.length; j++) {
+            const dx = x - balls[j].x;
+            const dy = y - balls[j].y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            if (distance < balls[j].radius + 20) {
+               canSpawn = false;
+               break;
+            }
+         }
+
+         if (canSpawn) {
+            balls.push(new Ball(x, y, upgrades.ballScore.level));
+            ballCount++;
+            ballCountDisplay.textContent = ballCount;
+         }
+      }
+
+      // Check for collisions between balls
+      function checkCollisions() {
+         const ballsToRemove = new Set();
+         const explosions = [];
+
+         for (let i = 0; i < balls.length; i++) {
+            if (ballsToRemove.has(i)) continue;
+
+            for (let j = i + 1; j < balls.length; j++) {
+               if (ballsToRemove.has(j)) continue;
+
+               const ball1 = balls[i];
+               const ball2 = balls[j];
+
+               const dx = ball2.x - ball1.x;
+               const dy = ball2.y - ball1.y;
+               const distance = Math.sqrt(dx * dx + dy * dy);
+
+               // Collision detected
+               if (distance < ball1.radius + ball2.radius) {
+                  // Check if balls are the same color
+                  if (ball1.color === ball2.color) {
+                     // Merge balls - add numbers and create new bigger ball
+                     const newNumber = ball1.number + ball2.number;
+                     const midX = (ball1.x + ball2.x) / 2;
+                     const midY = (ball1.y + ball2.y) / 2;
+
+                     // Check if we should explode instead of merge
+                     if (newNumber >= 100) {
+                        explosions.push({
+                           x: midX,
+                           y: midY,
+                           color: ball1.color
+                        });
+                        ballsToRemove.add(i);
+                        ballsToRemove.add(j);
+                        addCoins(newNumber * newNumber, midX, midY); // Reward for explosion
+                        break;
+                     }
+
+                     const newDx = (ball1.dx + ball2.dx) / 2;
+                     const newDy = (ball1.dy + ball2.dy) / 2;
+
+                     // Create new merged ball
+                     const newBall = new Ball(midX, midY, newNumber);
+                     newBall.radius = calcRadius(newNumber);
+                     newBall.color = ball1.color;
+                     newBall.dx = newDx;
+                     newBall.dy = newDy;
+                     newBall.mass = newBall.radius * 0.5;
+
+                     // Mark old balls for removal and add new one
+                     ballsToRemove.add(i);
+                     ballsToRemove.add(j);
+                     balls.push(newBall);
+
+                     // Add coins for merge
+                     addCoins(newNumber, midX, midY);
+
+                     // Skip further checks for these balls
+                     break;
+                  } else {
+                     // Regular collision for different colors
+                     const angle = Math.atan2(dy, dx);
+
+                     const velocity1 = Math.sqrt(ball1.dx * ball1.dx + ball1.dy * ball1.dy);
+                     const velocity2 = Math.sqrt(ball2.dx * ball2.dx + ball2.dy * ball2.dy);
+
+                     const direction1 = Math.atan2(ball1.dy, ball1.dx);
+                     const direction2 = Math.atan2(ball2.dy, ball2.dx);
+
+                     const velocityX1 = velocity1 * Math.cos(direction1 - angle);
+                     const velocityY1 = velocity1 * Math.sin(direction1 - angle);
+                     const velocityX2 = velocity2 * Math.cos(direction2 - angle);
+                     const velocityY2 = velocity2 * Math.sin(direction2 - angle);
+
+                     const finalVelocityX1 = ((ball1.mass - ball2.mass) * velocityX1 + 2 * ball2.mass * velocityX2) / (ball1.mass + ball2.mass);
+                     const finalVelocityX2 = ((ball2.mass - ball1.mass) * velocityX2 + 2 * ball1.mass * velocityX1) / (ball1.mass + ball2.mass);
+
+                     ball1.dx = Math.cos(angle) * finalVelocityX1 + Math.cos(angle + Math.PI / 2) * velocityY1;
+                     ball1.dy = Math.sin(angle) * finalVelocityX1 + Math.sin(angle + Math.PI / 2) * velocityY1;
+                     ball2.dx = Math.cos(angle) * finalVelocityX2 + Math.cos(angle + Math.PI / 2) * velocityY2;
+                     ball2.dy = Math.sin(angle) * finalVelocityX2 + Math.sin(angle + Math.PI / 2) * velocityY2;
+
+                     const overlap = (ball1.radius + ball2.radius - distance) / 2;
+                     ball1.x -= overlap * Math.cos(angle);
+                     ball1.y -= overlap * Math.sin(angle);
+                     ball2.x += overlap * Math.cos(angle);
+                     ball2.y += overlap * Math.sin(angle);
+                  }
+               }
+            }
+         }
+
+         // Create explosions
+         explosions.forEach(exp => {
+            createExplosion(exp.x, exp.y, exp.color, 50);
+         });
+
+         // Remove merged balls
+         if (ballsToRemove.size > 0) {
+            balls = balls.filter((_, index) => !ballsToRemove.has(index));
+            ballCount = balls.length;
+            ballCountDisplay.textContent = ballCount;
+         }
+      }
+
+      // Shake screen and launch all balls
+      function shakeScreen() {
+         if (isShaking || balls.length === 0) return;
+
+         isShaking = true;
+         document.body.classList.add('shake');
+
+         // Launch all balls in random directions
+         balls.forEach(ball => ball.launch());
+
+         // Remove shake class after animation
+         setTimeout(() => {
+            document.body.classList.remove('shake');
+            isShaking = false;
+         }, 500);
+      }
+
+      // Spawn initial balls
+      function init() {
+         for (let i = 0; i < 3; i++) {
+            spawnBall(
+               Math.random() * (canvas.width - 100) + 50,
+               Math.random() * (canvas.height - 100) + 50
+            );
+         }
+         updateUpgradeDisplays();
+      }
+
+      // Clear all balls
+      function clearBalls() {
+         balls = [];
+         ballCount = 0;
+         ballCountDisplay.textContent = ballCount;
+         glowCtx.clearRect(0, 0, glowCanvas.width, glowCanvas.height);
+         particlesCtx.clearRect(0, 0, particlesCanvas.width, particlesCanvas.height);
+         particles = [];
+      }
+
+      // Upgrade functions
+      function upgradeBallScore() {
+         const upgrade = upgrades.ballScore;
+         if (coins >= upgrade.cost) {
+            coins -= upgrade.cost;
+            upgrade.level++;
+            upgrade.cost *= upgrade.costMultiplier;
+            updateCoinDisplay();
+            updateUpgradeDisplays();
+            saveUpgrades();
+         }
+      }
+
+      function upgradeShakeForce() {
+         const upgrade = upgrades.shakeForce;
+         if (coins >= upgrade.cost) {
+            coins -= upgrade.cost;
+            upgrade.level++;
+            upgrade.cost *= upgrade.costMultiplier;
+            updateCoinDisplay();
+            updateUpgradeDisplays();
+            saveUpgrades();
+         }
+      }
+
+      function upgradeSpawnRate() {
+         const upgrade = upgrades.spawnRate;
+         if (coins >= upgrade.cost) {
+            coins -= upgrade.cost;
+            upgrade.level++;
+            upgrade.cost *= upgrade.costMultiplier;
+            updateCoinDisplay();
+            updateUpgradeDisplays();
+            saveUpgrades();
+         }
+      }
+
+      function upgradeCoinMultiplier() {
+         const upgrade = upgrades.coinMultiplier;
+         if (coins >= upgrade.cost) {
+            coins -= upgrade.cost;
+            upgrade.level++;
+            upgrade.cost *= upgrade.costMultiplier;
+            updateCoinDisplay();
+            updateUpgradeDisplays();
+            saveUpgrades();
+         }
+      }
+
+      function toggleAutoSpawn() {
+         autoSpawnEnabled = !autoSpawnEnabled;
+         toggleAutoSpawnBtn.textContent = `AUTO-SPAWN: ${autoSpawnEnabled ? 'ON' : 'OFF'}`;
+         if (autoSpawnEnabled) {
+            startAutoSpawn();
+         } else {
+            stopAutoSpawn();
+         }
+      }
+
+      function startAutoSpawn() {
+         if (autoSpawnTimer) return;
+         autoSpawnTimer = setInterval(() => {
+            if (autoSpawnEnabled) {
+               spawnBall(Math.random() * canvas.width, Math.random() * canvas.height);
+            }
+         }, autoSpawnInterval);
+      }
+
+      function stopAutoSpawn() {
+         clearInterval(autoSpawnTimer);
+         autoSpawnTimer = null;
+      }
+
+      function upgradeAutoSpawnRate() {
+         if (coins >= upgrades.autoSpawn.cost && autoSpawnInterval > upgrades.autoSpawn.minInterval) {
+            coins -= upgrades.autoSpawn.cost;
+            upgrades.autoSpawn.level++;
+            upgrades.autoSpawn.cost *= upgrades.autoSpawn.costMultiplier;
+            autoSpawnInterval = Math.max(upgrades.autoSpawn.minInterval, autoSpawnInterval - 200);
+            updateCoinDisplay();
+            updateUpgradeDisplays();
+            saveUpgrades();
+         }
+         if (autoSpawnInterval <= 0) {
+            upgradeAutoSpawnRateBtn.disabled = true;
+            upgradeAutoSpawnRateBtn.textContent = 'MAXED OUT';
+         }
+      }
+
+      // Reset all progress
+      function resetProgress() {
+         if (confirm("Are you sure you want to reset all progress? This action cannot be undone.")) {
+            localStorage.clear();
+            coins = 0;
+            ballCount = 0;
+            balls = [];
+            Object.keys(upgrades).forEach(key => {
+               upgrades[key].level = 1;
+               upgrades[key].cost = key === 'coinMultiplier' || key === 'autoSpawn' ? 10 : 5;
+            });
+            autoSpawnUpgrade.level = 1;
+            autoSpawnUpgrade.cost = 10;
+            updateCoinDisplay();
+            updateUpgradeDisplays();
+            clearBalls();
+         }
+      }
+
+      // Animation loop
+      function animate() {
+         requestAnimationFrame(animate);
+
+         // Clear canvases
+         drawGrid();
+         glowCtx.clearRect(0, 0, glowCanvas.width, glowCanvas.height);
+         particlesCtx.clearRect(0, 0, particlesCanvas.width, particlesCanvas.height);
+
+         checkCollisions();
+
+         // Update particles
+         particles = particles.filter(particle => particle.update());
+
+         for (let i = 0; i < balls.length; i++) {
+            balls[i].update();
+         }
+      }
+
+      // Toggle controls visibility
+      function toggleControls() {
+         controls.classList.toggle('hidden');
+         toggleControlsBtn.textContent = controls.classList.contains('hidden') ? '>' : '<';
+      }
+
+      // Event listeners
+      canvas.addEventListener('click', (event) => {
+         spawnBall(event.clientX, event.clientY);
+      });
+
+      clearBtn.addEventListener('click', clearBalls);
+      shakeBtn.addEventListener('click', shakeScreen);
+      shopBtn.addEventListener('click', () => shop.style.display = 'block');
+      closeShopBtn.addEventListener('click', () => shop.style.display = 'none');
+      upgradeBallScoreBtn.addEventListener('click', upgradeBallScore);
+      upgradeShakeForceBtn.addEventListener('click', upgradeShakeForce);
+      upgradeSpawnRateBtn.addEventListener('click', upgradeSpawnRate);
+      upgradeCoinMultiplierBtn.addEventListener('click', upgradeCoinMultiplier);
+      const resetBtn = document.getElementById('resetBtn');
+      resetBtn.addEventListener('click', resetProgress);
+      toggleControlsBtn.addEventListener('click', toggleControls);
+      toggleAutoSpawnBtn.addEventListener('click', toggleAutoSpawn);
+      upgradeAutoSpawnRateBtn.addEventListener('click', upgradeAutoSpawnRate);
+
+      window.addEventListener('resize', () => {
+         resizeCanvases();
+         drawGrid();
+      });
+
+      // Start the game
+      loadUpgrades();
+      init();
+      animate();
+      toggleControls();
+      stopAutoSpawn(); // Ensure auto-spawn is stopped initially
+   </script>
 </body>
+
 </html>
